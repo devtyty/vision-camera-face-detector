@@ -13,6 +13,7 @@ import android.util.Log;
 import androidx.camera.core.ImageProxy;
 
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
@@ -44,7 +45,7 @@ public class VisionCameraFaceDetectorPlugin extends FrameProcessorPlugin {
 
   FaceDetector faceDetector = FaceDetection.getClient(options);
 
-  private WritableMap processBoundingBox(Rect boundingBox) {
+  private WritableMap processBoundingBox(Rect boundingBox, InputImage image) {
     WritableMap bounds = Arguments.createMap();
 
     // Calculate offset (we need to center the overlay on the target)
@@ -66,6 +67,14 @@ public class VisionCameraFaceDetectorPlugin extends FrameProcessorPlugin {
     bounds.putDouble("boundingCenterY", boundingBox.centerY());
     bounds.putDouble("boundingExactCenterX", boundingBox.exactCenterX());
     bounds.putDouble("boundingExactCenterY", boundingBox.exactCenterY());
+
+
+    WritableArray byteData = Arguments.createArray();
+    for (byte b : image.getByteBuffer().array()) {
+      byteData.pushInt(b);
+    }
+
+    bounds.putArray("byteArray", byteData);
 
     return bounds;
   }
@@ -151,10 +160,10 @@ public class VisionCameraFaceDetectorPlugin extends FrameProcessorPlugin {
           map.putDouble("leftEyeOpenProbability", face.getLeftEyeOpenProbability());
           map.putDouble("rightEyeOpenProbability", face.getRightEyeOpenProbability());
           map.putDouble("smilingProbability", face.getSmilingProbability());
-          
+
 
           WritableMap contours = processFaceContours(face);
-          WritableMap bounds = processBoundingBox(face.getBoundingBox());
+          WritableMap bounds = processBoundingBox(face.getBoundingBox(), image);
 
           map.putMap("bounds", bounds);
           map.putMap("contours", contours);
